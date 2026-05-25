@@ -79,12 +79,14 @@ func (r *ClientAuthRepository) RegisterClient(ctx context.Context, client *domai
 
 	qScope := `INSERT INTO client_scopes (client_id, scope) VALUES (?, ?)`
 
-	_, err = tx.ExecContext(
-		ctx, qScope, client_id, "iam",
-	)
+	for _, scope := range client.Scopes {
+		_, err = tx.ExecContext(
+			ctx, qScope, client_id, scope,
+		)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
