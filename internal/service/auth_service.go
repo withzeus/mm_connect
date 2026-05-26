@@ -25,7 +25,7 @@ func NewAuthService(clientRepo repository.ClientAuthRepository, jwt *jwt.Manager
 	}
 }
 
-func (s *AuthService) RegisterClient(ctx context.Context, clientName string, website string) (*domain.Client, string, error) {
+func (s *AuthService) RegisterClient(ctx context.Context, clientName string, website string, scopes []string) (*domain.Client, string, error) {
 	ps, err := secret.Generate()
 	if err != nil {
 		return nil, "", errors.New("Internal server error")
@@ -43,6 +43,7 @@ func (s *AuthService) RegisterClient(ctx context.Context, clientName string, web
 		Name:    clientName,
 		Domain:  website,
 		Secret:  sh,
+		Scopes:  scopes,
 		Enabled: true,
 	}
 

@@ -2,8 +2,10 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -38,7 +40,12 @@ func (s *Server) RegisterClient(ctx context.Context, req *clientv1.RegisterClien
 		return nil, status.Error(codes.InvalidArgument, "Domain must be a valid website host or IP address")
 	}
 
-	created, secret, err := s.auth.RegisterClient(ctx, clientName, domain)
+	scopes, err := sanitizeAndNormalizeScopes(req.Scopes)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	created, secret, err := s.auth.RegisterClient(ctx, clientName, domain, scopes)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to register client: %v", err)
 	}
@@ -67,6 +74,35 @@ func isValidDomainOrIP(input string) bool {
 
 	host := parsed.Hostname()
 	return host != "" && strings.Contains(host, ".")
+}
+
+var validScopeRegex = regexp.MustCompile(`^[a-z0-9:-]+$`)
+
+func sanitizeAndNormalizeScopes(input []string) ([]string, error) {
+	if len(input) == 0 {
+		return nil, nil
+	}
+
+	seen := make(map[string]bool)
+	var processedScopes []string
+
+	for _, scope := range input {
+		cleaned := strings.TrimSpace(strings.ToLower(scope))
+		if cleaned == "" {
+			continue
+		}
+
+		if !validScopeRegex.MatchString(cleaned) {
+			return nil, fmt.Errorf("Invalid scope format: %q", scope)
+		}
+
+		if !seen[cleaned] {
+			seen[cleaned] = true
+			processedScopes = append(processedScopes, cleaned)
+		}
+	}
+
+	return processedScopes, nil
 }
 
 func (s *Server) IssueToken(ctx context.Context, req *clientv1.IssueTokenRequest) (*clientv1.IssueTokenResponse, error) {

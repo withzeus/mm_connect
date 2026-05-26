@@ -7,7 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
-	github.com/withzeus/id_contracts v1.0.13
+	github.com/withzeus/id_contracts v1.0.15
 	golang.org/x/crypto v0.48.0
 	google.golang.org/grpc v1.81.1
 )
